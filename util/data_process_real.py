@@ -97,7 +97,7 @@ class Data_Model(object):
 
             data = np.array(df)[:,1:]
 
-            general_data = normalize_data(data)
+            general_data = normalize_data(data,use_sg_filter=False)
 
             data, label = extract_time(general_data,num_frame, skip,sensor)
 #            data, label = extract_time2(general_data,num_frame, skip,sensor)

@@ -4,7 +4,7 @@ import numpy as np
 from keras import backend as K
 import argparse
 
-save_root = "save"
+save_root = "save_noSG"
 
 models = {0:"TCN", 1:"LSTM", 2:"BiLSTM"}
 categories = {0:"Worker", 1:"Business", 2:"Economic", 3:"Sponsor", 4:"Refugee", 5:"Total"}
