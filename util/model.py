@@ -17,6 +17,7 @@ def custom_loss(layer, lay2, T):
         if T>= 1:
             y_pred_soft = backend.softmax(lay2/T)
             layer_soft = backend.softmax(layer/T)
+            
             kl = kld(layer_soft, y_pred_soft)
             return ce + (T**2)*kl
         elif T==0:
@@ -117,13 +118,7 @@ class model(object):
             self.create_model_1(num_frame, num_classes, feature_size)
         elif model_type[0] == "BiLSTM": #BiLSTM
             self.create_model_2(num_frame, num_classes, feature_size)
-        elif model_type[0] == "GridLSTM": #BiLSTM
-            self.create_model_2(num_frame, num_classes, feature_size)
-        elif model_type[0] == "BGLSTM": #BiLSTM
-            self.create_model_2(num_frame, num_classes, feature_size)
 
-#        elif model_type[0] == 2: #TCN + LSTM
-#            self.create_model_2(num_frame, num_classes, feature_size)
 
     def create_model_0(self, num_frame, num_classes, feature_size,activation_custom="relu"):
         main_input = Input(shape=(num_frame, feature_size[0]))
@@ -167,35 +162,7 @@ class model(object):
         self.model.summary()
 
         self.model.compile(loss='mse', optimizer=self.optimizer, metrics=[])
-#
-#    def create_model_2(self, num_frame, num_classes, feature_size,activation_custom="relu"):
-#        main_input = Input(shape=(num_frame, feature_size[0]))
-#        t_lstm_feature = cudnnlstm_block((num_frame, feature_size[0]), (60,30), main_input)
-#        t_lstm_logit = Dense(num_classes)(t_lstm_feature)
-##        t_lstm_out = Activation('softmax', name='t1')(t_lstm_logit)
-#
-#        t = Reshape((num_frame, feature_size[0]))(main_input)
-#        vals = [8, 16, 32, 64]
-#        t1, t2, t3, t4 = TCN_Block(t, activation_custom, vals, jump=True, length=6)
-#        t = BatchNormalization(axis=-1)(t4)
-#        t = Activation(activation_custom)(t)
-#        t_tcn_feature = GlobalAveragePooling1D()(t)
-#        t_tcn_logit = Dense(num_classes)(t_tcn_feature)
-##        t_tcn_out = Activation('softmax', name='t2')(t_tcn_logit)
-#
-#        logit = concatenate([t_lstm_feature, t_tcn_feature])
-#        logit = Dense(num_classes)(logit)
-#        tout = Activation('softmax', name='out')(logit)
-#
-#        self.model = Model(inputs=main_input, output=[tout, t_lstm_out, t_tcn_out])
-#        self.model.summary()
-#        losses = {"out": 'mse',
-#          "t1": custom_loss(logit, t_lstm_logit, 1),
-#          "t2": custom_loss(logit, t_tcn_logit, 1)
-#          }
-#        self.model.compile(loss=losses, optimizer=self.optimizer, metrics=['mae'])
-
-
+        
     def train(self,
               train_data, train_label,
               val_data=[], val_label=[],
@@ -218,7 +185,8 @@ class model(object):
 
 
         callbacks_list = [checkpoint, early]
-
+        
+            
         self.model.fit(train_data, train_label, batch_size=bs,
                        epochs=base_epoch, shuffle=True,
                        validation_data=(val_data, val_label),

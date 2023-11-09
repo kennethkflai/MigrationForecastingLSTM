@@ -81,7 +81,8 @@ class Data_Model(object):
         root_path,                 # Directory of the location of the dataset
         num_frame=60,
         skip=1,
-        sensor=0
+        sensor=0,
+        use_sg_filter=True,
         ):
 
         if skip <1:
@@ -97,7 +98,7 @@ class Data_Model(object):
 
             data = np.array(df)[:,1:]
 
-            general_data = normalize_data(data,use_sg_filter=False)
+            general_data = normalize_data(data,use_sg_filter=use_sg_filter)
 
             data, label = extract_time(general_data,num_frame, skip,sensor)
 #            data, label = extract_time2(general_data,num_frame, skip,sensor)

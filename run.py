@@ -4,9 +4,9 @@ import numpy as np
 from keras import backend as K
 import argparse
 
-save_root = "save_123noSG"
+save_root = "save"
 
-models = {0:"TCN", 1:"LSTM", 2:"BiLSTM"}
+models = {0:"TCN", 1:"LSTM", 2:"BiLSTM", 3:"TCN+LSTM", 4:"TCN+BiLSTM"}
 categories = {0:"Worker", 1:"Business", 2:"Economic", 3:"Sponsor", 4:"Refugee", 5:"Total"}
 
 
@@ -27,9 +27,9 @@ def error_rmsle(prediction, truth):
 
     return np.sqrt(np.sum(squared)/len(squared))
 
-def calculate_performance(model_type, model_name, data_set, prediction, truth):
-    np.save(f'{save_root}//{model_type}//{model_name}_predict_{data_set}', prediction)
-    np.save(f'{save_root}//{model_type}//{model_name}_truth_{data_set}', truth)
+def calculate_performance(model_type, model_name, data_set, num_frame, prediction, truth):
+    np.save(f'{save_root}//{model_type}//{model_name}_predict_{data_set}_frame{num_frame}', prediction)
+    np.save(f'{save_root}//{model_type}//{model_name}_truth_{data_set}_frame{num_frame}', truth)
 
 
     mse = error_mse(prediction,truth)
@@ -38,7 +38,7 @@ def calculate_performance(model_type, model_name, data_set, prediction, truth):
     print(f"{data_set} t: {model_type}, n: {model_name}, mse: {mse}, rmsle: {rmsle:>10}, rmsle: {r2:2.20f}")
 
     f = open(f'{save_root}//acc.txt', 'a')
-    f.write(f"{data_set:>10} t: {model_type:>10}, n: {model_name:>10}, mse: {mse:2.20f}, rmsle: {rmsle:2.20f}, r2: {r2:2.20f}\n")
+    f.write(f"{data_set:>10} t: {model_type:>10}, n: {model_name:>10}, fr: {num_frame:>10}, mse: {mse:2.20f}, rmsle: {rmsle:2.20f}, r2: {r2:2.20f}\n")
     f.close()
 
 if __name__ == "__main__":
@@ -61,56 +61,61 @@ if __name__ == "__main__":
     num_frame = _args.timestep
     root_path = r"data_csv//*"
 
-    data_structure = Data_Model(root_path, num_frame=num_frame, skip=np.int(1), sensor=-1)
-    total_data, total_label = data_structure.get_data()
-
-    for sensor in range(0, 6):
-
-        data = total_data[:,:,:,[sensor]]
-        label = total_label[:,:,[sensor]]
-
-        train_data = data[0][:20]
-        train_label = label[0][:20]
-
-        val_data = data[0][20:30]
-        val_label = label[0][20:30]
-
-        test_data = data[0][30:]
-        test_label = label[0][30:]
-
-        for index in range(1,len(label)):
-            train_data = np.vstack((train_data,data[index][:20]))
-            train_label = np.vstack((train_label,label[index][:20]))
-
-            val_data = np.vstack((val_data,data[index][20:30]))
-            val_label = np.vstack((val_label,label[index][20:30]))
-
-            test_data = np.vstack((test_data,data[index][30:]))
-            test_label = np.vstack((test_label,label[index][30:]))
-
-        for model_type in range(0,3):
-            model_name = categories[sensor]
-
-            t_model = model(num_classes=1,
-                            model_type=(models[model_type],model_name),
-                            lr=1e-3,
-                            num_frame=num_frame,
-                            feature_size=(1,))
-
-            save_file = t_model.train(train_data,
-                                      train_label,
-                                      val_data,
-                                      val_label,
-                                      batch_size,
-                                      base_epoch=9999,
-                                      path=save_root)
-
-            t_model.load(save_file)
-            pred_test_label = t_model.predict(np.array(test_data))
-            pred_val_label = t_model.predict(np.array(val_data))
-
-            calculate_performance(models[model_type], model_name, "test", pred_test_label,test_label)
-            calculate_performance(models[model_type], model_name, "val", pred_val_label,val_label)
-
-            del t_model
-            K.clear_session()
+    for num_frame in [12*i for i in range(1,6)]:
+        data_structure = Data_Model(root_path, num_frame=num_frame, skip=np.int(1), sensor=-1,use_sg_filter=True)
+        total_data, total_label = data_structure.get_data()
+    
+        for sensor in range(2, 5):
+    
+            data = total_data[:,:,:,[sensor]]
+            label = total_label[:,:,[sensor]]
+    
+            train_data = data[0][:20]
+            train_label = label[0][:20]
+    
+            val_data = data[0][20:30]
+            val_label = label[0][20:30]
+    
+            test_data = data[0][30:]
+            test_label = label[0][30:]
+    
+            for index in range(1,len(label)):
+                train_data = np.vstack((train_data,data[index][:20]))
+                train_label = np.vstack((train_label,label[index][:20]))
+    
+                val_data = np.vstack((val_data,data[index][20:30]))
+                val_label = np.vstack((val_label,label[index][20:30]))
+    
+                test_data = np.vstack((test_data,data[index][30:]))
+                test_label = np.vstack((test_label,label[index][30:]))
+    
+            for model_type in range(0,3):
+                model_name = categories[sensor]
+    
+                t_model = model(num_classes=1,
+                                model_type=(models[model_type],model_name),
+                                lr=1e-3,
+                                num_frame=num_frame,
+                                feature_size=(1,))
+    
+                save_file = t_model.train(train_data,
+                                          train_label,
+                                          val_data,
+                                          val_label,
+                                          batch_size,
+                                          base_epoch=9999,
+                                          path=save_root)
+    
+                t_model.load(save_file)
+                pred_test_label = t_model.predict(np.array(test_data))
+                pred_val_label = t_model.predict(np.array(val_data))
+                
+                if model_type == 3 or model_type == 4:
+                    pred_test_label = np.argmax(pred_test_label[-1],1)
+                    pred_val_label = np.argmax(pred_val_label[-1],1)
+                        
+                calculate_performance(models[model_type], model_name, "test", num_frame, pred_test_label,test_label)
+                calculate_performance(models[model_type], model_name, "val", num_frame, pred_val_label,val_label)
+    
+                del t_model
+                K.clear_session()
