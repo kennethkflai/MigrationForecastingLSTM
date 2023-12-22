@@ -7,7 +7,7 @@ import argparse
 save_root = "save"
 
 models = {0:"TCN", 1:"LSTM", 2:"BiLSTM", 3:"TCN+LSTM", 4:"TCN+BiLSTM"}
-categories = {0:"Worker", 1:"Business", 2:"Economic", 3:"Sponsor", 4:"Refugee", 5:"Total"}
+categories = {0:"Employment", 1:"Worker", 2:"Business", 3:"Economic", 4:"Sponsor", 5:"Refugee", 6:"Total"}
 
 
 def error_mse(prediction, truth):
@@ -45,9 +45,9 @@ if __name__ == "__main__":
     _argparser = argparse.ArgumentParser(
             description='Recognition',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    _argparser.add_argument(
-        '--timestep', type=int, default=60, metavar='INTEGER',
-        help='Time step in network')
+#    _argparser.add_argument(
+#        '--timestep', type=int, default=60, metavar='INTEGER',
+#        help='Time step in network')
     _argparser.add_argument(
         '--type', type=int, default=1, metavar='INTEGER',
         help='model')
@@ -58,14 +58,14 @@ if __name__ == "__main__":
 
     model_type = _args.type
     batch_size = 16
-    num_frame = _args.timestep
+#    num_frame = _args.timestep
     root_path = r"data_csv//*"
 
     for num_frame in [12*i for i in range(1,6)]:
         data_structure = Data_Model(root_path, num_frame=num_frame, skip=np.int(1), sensor=-1,use_sg_filter=True)
         total_data, total_label = data_structure.get_data()
     
-        for sensor in range(2, 5):
+        for sensor in range(0, 1):
     
             data = total_data[:,:,:,[sensor]]
             label = total_label[:,:,[sensor]]

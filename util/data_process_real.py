@@ -96,7 +96,7 @@ class Data_Model(object):
         for index in tqdm(range(len(file_list))):
             df = pd.read_csv(file_list[index])
 
-            data = np.array(df)[:,1:]
+            data = np.array(df)[:96,1:]
 
             general_data = normalize_data(data,use_sg_filter=use_sg_filter)
 
